@@ -1,0 +1,11 @@
+image_id : "image-id"
+instance_type : "instance type you want like t2.micro etc"
+subnet_id : "your subnet id"
+security_group_ids : "security group id you want to attach with the instances"
+number_of_master_node : "1"
+key_name : "key we want to associate with the instance"
+master_drive : "folder absolute path like /master etc.."
+master_port : "port number we want to allocate to the master process"
+slave_drive : "again similar to master_drive"
+number_of_slave_node : "number of slave nodes we want in the cluster"
+

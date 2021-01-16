@@ -1,0 +1,72 @@
+- hosts : localhost
+  vars_files :
+          - "vars.yml"
+  tasks :
+  - name : Launching servers for master
+    ec2 :
+            image : "{{ image_id }}"
+            instance_type : "{{ instance_type }}"
+            count : "{{ number_of_master_node }}"
+            vpc_subnet_id : "{{ subnet_id }}"
+            assign_public_ip : yes
+            group_id : "{{ security_group_ids }}"
+            key_name : "{{ key_name }}"
+            instance_tags :
+                    Name : "master"
+  
+  - name : waiting for 20 s
+    pause :
+            seconds : "20"
+
+
+  - name : Refreshing the inventory for updating the values of groups variable
+    meta : refresh_inventory
+
+
+
+- hosts : tag_Name_master
+  vars_files :
+          - "vars.yml"
+  tasks :
+  - name : waiting fot the master to be reachable
+    wait_for_connection :
+
+  - name : Downloading the hadoop-1.2.1
+    get_url :
+            url : "https://archive.apache.org/dist/hadoop/core/hadoop-1.2.1/hadoop-1.2.1-1.x86_64.rpm"
+            dest : "/root/hadoop-1.2.1-1.x86_64.rpm"
+
+  - name : Dowloading the jdk
+    get_url :
+            url : "https://bucket-for-jdk.s3.ap-south-1.amazonaws.com/jdk-8u171-linux-x64.rpm"
+            dest : "/root/jdk-8u171-linux-x64.rpm"
+
+  - name : Installing the jdk
+    command : "rpm -i /root/jdk-8u171-linux-x64.rpm"
+  - name : Installing the hadoop
+    command : "rpm -i /root/hadoop-1.2.1-1.x86_64.rpm --force"
+
+
+  - name : Configuring the (core-site.xml)
+    template :
+            src : "core-site.xml"
+            dest : "/etc/hadoop/core-site.xml"
+
+
+  - name : Configuring the (hdfs-site.xml)
+    template :
+            src : "hdfs-site.xml"
+            dest : "/etc/hadoop/hdfs-site.xml"
+
+  - name : making the drive for master
+    file :
+            path : "{{ master_drive }}"
+            state : directory
+
+  - name : formatting the drive
+    command : "hadoop namenode -format -force"
+
+  - name : ensuring that service has been started
+    command : "hadoop-daemon.sh start namenode"
+
+
